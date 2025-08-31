@@ -1,6 +1,6 @@
 # qr_generator.py
 import qrcode
-from datetime import datetime me
+from datetime import datetime
 
 def create_qr(data: str, filename: str = None):
     """
