@@ -4,7 +4,7 @@ import string
 import json
 import os
 from cryptography.fernet import Fernet
-ni
+
 KEY_FILE = "secret.key"
 DATA_FILE = "passwords.json"
 
