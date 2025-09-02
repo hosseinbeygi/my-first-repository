@@ -1,0 +1,85 @@
+# password_manager.py
+import secrets
+import string
+import json
+import os
+from cryptography.fernet import Fernet
+
+KEY_FILE = "secret.key"
+DATA_FILE = "passwords.json"
+
+# Generate encryption key (only once)
+def generate_key():
+    if not os.path.exists(KEY_FILE):
+        key = Fernet.generate_key()
+        with open(KEY_FILE, "wb") as key_file:
+            key_file.write(key)
+
+def load_key():
+    return open(KEY_FILE, "rb").read()
+
+# Generate a secure random password
+def generate_password(length=16):
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+# Save password securely
+def save_password(service, username, password):
+    key = load_key()
+    cipher = Fernet(key)
+
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "rb") as file:
+            encrypted_data = file.read()
+            data = json.loads(cipher.decrypt(encrypted_data).decode())
+    else:
+        data = {}
+
+    data[service] = {"username": username, "password": password}
+    encrypted_data = cipher.encrypt(json.dumps(data).encode())
+
+    with open(DATA_FILE, "wb") as file:
+        file.write(encrypted_data)
+    print("✅ Password saved securely!")
+
+# Retrieve password
+def get_password(service):
+    key = load_key()
+    cipher = Fernet(key)
+
+    if not os.path.exists(DATA_FILE):
+        print("❌ No passwords stored yet.")
+        return
+
+    with open(DATA_FILE, "rb") as file:
+        encrypted_data = file.read()
+        data = json.loads(cipher.decrypt(encrypted_data).decode())
+
+    if service in data:
+        print(f"🔑 Service: {service}")
+        print(f"👤 Username: {data[service]['username']}")
+        print(f"🔒 Password: {data[service]['password']}")
+    else:
+        print("❌ Service not found.")
+
+if __name__ == "__main__":
+    generate_key()
+    while True:
+        choice = input("\n1️⃣ Generate Password\n2️⃣ Save Password\n3️⃣ Get Password\n4️⃣ Exit\n👉 Choose: ")
+
+        if choice == "1":
+            print("Generated Password:", generate_password())
+        elif choice == "2":
+            service = input("Service: ")
+            username = input("Username: ")
+            password = input("Password (leave empty to auto-generate): ")
+            if not password:
+                password = generate_password()
+            save_password(service, username, password)
+        elif choice == "3":
+            service = input("Service: ")
+            get_password(service)
+        elif choice == "4":
+            break
+        else:
+            print("❌ Invalid choice.")
