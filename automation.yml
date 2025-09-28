@@ -1,0 +1,106 @@
+name: Complete Repo Automation
+
+# تریگرها
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  issues:
+    types: [opened]
+  release:
+    types: [published]
+  schedule:
+    - cron: '0 0 * * *'  # هر روز ساعت 00:00 UTC
+
+jobs:
+
+  # 1) تست‌ها
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with: { node-version: '16' }
+      - run: npm ci
+      - run: npm test
+
+  # 2) Lint کردن کد
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with: { node-version: '16' }
+      - run: npm ci
+      - run: npm run lint
+
+  # 3) بیلد پروژه
+  build:
+    name: Build Project
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with: { node-version: '16' }
+      - run: npm ci
+      - run: npm run build
+
+  # 4) اختصاص خودکار و برچسب‌گذاری Issues جدید
+  auto-assign:
+    name: Auto-assign & Label New Issues
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assign & Label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} \
+            --add-assignee YOUR_GITHUB_USERNAME \
+            --add-label triage
+
+  # 5) استال و بستن خودکار issueها
+  stale-cleanup:
+    name: Stale Issue Cleanup
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mark & Close Stale Issues
+        uses: peter-evans/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: >
+            This issue has been automatically marked as stale due to no activity for 30 days.
+            It will be closed in 7 days if no further activity occurs.
+          stale-pr-message: >
+            This pull request has been automatically marked as stale due to no activity for 30 days.
+            It will be closed in 7 days if no further activity occurs.
+          days-before-stale: 30
+          days-before-close: 7
+          stale-issue-label: stale
+          close-issue-message: >
+            Closing this stale issue. Feel free to reopen if needed.
+          operations: |
+            issue
+            pull-request
+
+  # 6) ایجاد خودکار Release
+  release:
+    name: Create GitHub Release
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.event.release.tag_name }}
+          name: Release ${{ github.event.release.tag_name }}
+          body: ${{ github.event.release.body }}
