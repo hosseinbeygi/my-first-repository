@@ -1,6 +1,7 @@
 # password_manager.py
 import secrets
-import string  
+import string 
+
 import json
 import os
 from cryptography.fernet import Fernet
