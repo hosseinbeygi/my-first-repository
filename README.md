@@ -2,7 +2,6 @@
 import qrcode
 from datetime import datetime
 
-
 def create_qr(data: str, filename: str = None):
     """
     Creates a QR code from the given data and saves it as an image.
