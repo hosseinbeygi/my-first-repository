@@ -4,7 +4,7 @@ from datetime import datetime
 
 def create_qr(data: str, filename: str = None):
     """
-    Creates a QR code from the given data and saves it as an image.
+    Creates a QR code from the given data and saves it as an.
     
     :param data: The text or link to encode into a QR code.
     :param filename: Optional custom filename for the QR code image.
