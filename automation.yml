@@ -2,7 +2,7 @@ name: Complete Repo Automation
 
 # تریگرها
 on:
-  push:
+  push:  
     branches: [main]
   pull_request:
     branches: [main]
