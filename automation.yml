@@ -9,7 +9,7 @@ on:
   issues:
     types: [opened]
   release:
-    types: [published]  
+    types: [published]
   schedule:
     - cron: '0 0 * * *'  # هر روز ساعت 00:00 UTC
 
